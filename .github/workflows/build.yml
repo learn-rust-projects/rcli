@@ -1,55 +1,90 @@
+# GitHub Actions 工作流配置
+# 用于构建和测试 Rust 项目
+
+# 工作流名称
 name: build
 
+# 触发条件配置
 on:
+  # 当推送到特定分支时触发
   push:
     branches:
-      - master
+      - master  # 主分支推送时触发
     tags:
-      - v*
+      - v*      # 以 v 开头的标签推送时触发
+  # 当创建拉取请求时触发
   pull_request:
     branches:
-      - master
+      - master  # 针对主分支的拉取请求
 
+# 权限配置
 permissions:
-  contents: write
+  contents: write  # 允许写入内容（用于发布）
 
+# 作业定义
 jobs:
+  # Rust 构建作业
   build-rust:
+    # 策略配置，支持多平台构建
     strategy:
       matrix:
-        platform: [ubuntu-latest]
+        platform: [ubuntu-latest]  # 构建平台配置
+    # 运行环境
     runs-on: ${{ matrix.platform }}
+
+    # 步骤定义
     steps:
+      # 步骤1: 检出代码
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          submodules: recursive
+          fetch-depth: 0           # 获取完整历史记录
+          submodules: recursive    # 递归检出子模块
+
+      # 步骤2: 安装 Rust 工具链
       - name: Install Rust
         run: rustup toolchain install stable --component llvm-tools-preview
+
+      # 步骤3: 安装代码覆盖率工具
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@cargo-llvm-cov
+
+      # 步骤4: 安装下一代测试运行器
       - name: install nextest
         uses: taiki-e/install-action@nextest
+
+      # 步骤5: 使用 Rust 缓存加速构建
       - uses: Swatinem/rust-cache@v2
+
+      # 步骤6: 检查代码格式
       - name: Check code format
         run: cargo fmt -- --check
+
+      # 步骤7: 检查包错误
       - name: Check the package for errors
         run: cargo check --all
+
+      # 步骤8: 代码质量检查
       - name: Lint rust sources
         run: cargo clippy --all-targets --all-features --tests --benches -- -D warnings
+
+      # 步骤9: 执行测试
       - name: Execute rust tests
         run: cargo nextest run --all-features
+
+      # 步骤10: 生成变更日志（仅在标签发布时执行）
       - name: Generate a changelog
         uses: orhun/git-cliff-action@v2
         id: git-cliff
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')  # 仅在标签发布时执行
         with:
-          config: cliff.toml
-          args: -vv --latest --strip header
+          config: cliff.toml        # 使用 cliff.toml 配置文件
+          args: -vv --latest --strip header  # 详细输出，仅最新版本，去除头部
         env:
-          OUTPUT: CHANGES.md
+          OUTPUT: CHANGES.md         # 输出文件名
+
+      # 步骤11: 发布到 GitHub Releases（仅在标签发布时执行）
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/')  # 仅在标签发布时执行
         with:
-          body: ${{ steps.git-cliff.outputs.content }}
+          body: ${{ steps.git-cliff.outputs.content }}  # 使用生成的变更日志作为发布内容
