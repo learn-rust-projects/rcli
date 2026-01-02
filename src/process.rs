@@ -1,6 +1,9 @@
 use anyhow::Context;
 use csv::Reader;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
+
+use crate::opts::OutputFormat;
 #[derive(Debug, Deserialize, Serialize)]
 #[serde(rename_all = "PascalCase")]
 pub struct Record {
@@ -15,16 +18,25 @@ pub struct Record {
     kit: u8,
 }
 
-pub fn process_csv(input: &str, output: &str) -> anyhow::Result<()> {
+pub fn process_csv(input: &str, output: &str, format: OutputFormat) -> anyhow::Result<()> {
     let mut reader = Reader::from_path(input).context("Failed to open input file")?;
     let mut vec = Vec::with_capacity(128);
-    for result in reader.deserialize() {
-        let record: Record = result.context("Failed to deserialize record")?;
-        vec.push(record);
+    let headers = reader
+        .headers()
+        .context("Failed to read CSV headers")?
+        .clone();
+
+    for result in reader.records() {
+        let record = result.context("Failed to deserialize record")?;
+        let json_value = headers.iter().zip(record.iter()).collect::<Value>();
+        println!("{:?}", json_value);
+        vec.push(json_value);
     }
-    let json_data =
-        serde_json::to_string_pretty(&vec).context("Failed to serialize records to JSON")?;
-    std::fs::write(output, json_data).context("Failed to write output file")?;
+    let content = match format {
+        OutputFormat::Json => serde_json::to_string_pretty(&vec)?,
+        OutputFormat::Yaml => serde_yaml::to_string(&vec)?,
+    };
+    std::fs::write(output, content).context("Failed to write output file")?;
 
     Ok(())
 }
