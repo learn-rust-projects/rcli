@@ -1,22 +1,4 @@
-use std::path::Path;
-
-use clap::Parser;
-
-#[derive(Parser, Debug)]
-#[command(name = "rcli", version = "1.0", about = "An example CLI app",long_about = None)]
-pub struct Opts {
-    #[clap(subcommand)]
-    pub sub: SubCommand,
-}
-
-#[derive(Parser, Debug)]
-pub enum SubCommand {
-    #[command(name = "csv", about = "Show Csv ,or convert Csv to others formats")]
-    Csv(CsvOpts),
-    #[command(name = "genpass", about = "Generate password")]
-    GenPass(GenPassOpts),
-}
-
+use super::prelude::*;
 #[derive(Parser, Debug)]
 pub struct CsvOpts {
     #[arg(short, long, help = "Input file path",value_parser = verify_input_file)]
@@ -33,29 +15,6 @@ pub struct CsvOpts {
 
     #[arg(long, help = "CSV has header", default_value_t = true)]
     pub header: bool,
-}
-
-#[derive(Parser, Debug)]
-pub struct GenPassOpts {
-    #[arg(short, long, help = "Password length", default_value_t = 16)]
-    pub length: u8,
-    #[arg(long, help = "Password has upper case", default_value_t = true)]
-    pub upper_case: bool,
-    #[arg(long, help = "Password has lower case", default_value_t = true)]
-    pub lower_case: bool,
-    #[arg(long, help = "Password has number", default_value_t = true)]
-    pub number: bool,
-    #[arg(long, help = "Password has symbol", default_value_t = true)]
-    pub symbol: bool,
-}
-
-fn verify_input_file(file_name: &str) -> Result<String, &'static str> {
-    if Path::new(file_name).exists() {
-        Ok(file_name.to_string())
-    } else {
-        // roData编译的时候字面量就会编译到程序里面，生命周期和程序一样长
-        Err("Input file does not exist.")
-    }
 }
 
 #[derive(Debug, Clone, Copy)]

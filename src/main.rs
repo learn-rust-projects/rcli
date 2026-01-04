@@ -1,5 +1,8 @@
 use clap::Parser;
-use template::{Opts, SubCommand, gen_pass, process_csv};
+use template::{
+    Base64Opts, Opts, SubCommand, gen_pass, process_base64_decode, process_base64_encode,
+    process_csv,
+};
 fn main() -> anyhow::Result<()> {
     let opts: Opts = Opts::parse();
     match opts.sub {
@@ -20,6 +23,16 @@ fn main() -> anyhow::Result<()> {
             );
             Ok(())
         }
+        SubCommand::Base64(base64_opts) => match base64_opts {
+            Base64Opts::EnCode(base64_encode_opts) => {
+                process_base64_encode(&base64_encode_opts.input, base64_encode_opts.format)?;
+                Ok(())
+            }
+            Base64Opts::DeCode(base64_decode_opts) => {
+                process_base64_decode(&base64_decode_opts.input, base64_decode_opts.format)?;
+                Ok(())
+            }
+        },
     }
 }
 // 新增测试
