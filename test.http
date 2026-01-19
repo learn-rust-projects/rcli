@@ -1,3 +1,10 @@
 ### Test index page
 
-GET http://localhost:8080/Cargo.toml1
+GET http://localhost:8080/Cargo.toml
+### Test index page
+GET http://localhost:8080/
+### Test serve page
+GET http://localhost:8080/tower/
+# Range: bytes=0-100
+### Test serve page
+http://localhost:8080/src/process/http_serve.rs
