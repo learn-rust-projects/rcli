@@ -1,7 +1,7 @@
 use super::prelude::*;
 #[derive(Parser, Debug)]
 pub struct CsvOpts {
-    #[arg(short, long, help = "Input file path",value_parser = verify_input_file)]
+    #[arg(short, long, help = "Input file path",value_parser = verify_file)]
     pub input: String,
 
     #[arg(short, long, help = "Output file path")]

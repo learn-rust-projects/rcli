@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use super::prelude::*;
 #[derive(Parser, Debug)]
-pub enum Base64Opts {
+pub enum Base64SubCommand {
     #[command(name = "encode", about = "Base64 encode")]
     EnCode(Base64EncodeOpts),
     #[command(name = "decode", about = "Base64 decode")]
@@ -11,7 +11,7 @@ pub enum Base64Opts {
 
 #[derive(Parser, Debug)]
 pub struct Base64EncodeOpts {
-    #[arg(short, long, value_parser = verify_input_file, default_value = "-", help = "Input file path")]
+    #[arg(short, long, value_parser = verify_file, default_value = "-", help = "Input file path")]
     pub input: String,
     #[arg(short, long, help = "Base64 format",value_parser = parse_base64_format,default_value = "standard")]
     pub format: Base64Format,
@@ -19,7 +19,7 @@ pub struct Base64EncodeOpts {
 
 #[derive(Parser, Debug)]
 pub struct Base64DecodeOpts {
-    #[arg(short, long, value_parser = verify_input_file, default_value = "-", help = "Input file path")]
+    #[arg(short, long, value_parser = verify_file, default_value = "-", help = "Input file path")]
     pub input: String,
     #[arg(short, long, help = "Base64 format",value_parser = parse_base64_format,default_value = "standard")]
     pub format: Base64Format,

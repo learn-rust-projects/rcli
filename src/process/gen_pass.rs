@@ -1,4 +1,4 @@
-use rand::{prelude::IndexedRandom, seq::SliceRandom};
+use rand::seq::SliceRandom;
 const UPPER_CASE: &[u8] = b"ABCDEFGHIJKLMNPQRSTUVWXYZ";
 const LOWER_CASE: &[u8] = b"abcdefghijkmnopqrstuvwxyz";
 const NUMBER: &[u8] = b"123456789";
@@ -9,8 +9,8 @@ pub fn gen_pass(
     lower_case: bool,
     number: bool,
     symbol: bool,
-) -> anyhow::Result<()> {
-    let mut rng = rand::rng();
+) -> anyhow::Result<String> {
+    let mut rng = rand::thread_rng();
     let mut pass = Vec::new();
     let mut chars = Vec::new();
     if upper_case {
@@ -34,9 +34,6 @@ pub fn gen_pass(
     }
     pass.shuffle(&mut rng);
     let pass = String::from_utf8(pass).expect("Failed to convert Vec<u8> to String");
-    println!("Password: {pass}");
-    let strength = zxcvbn::zxcvbn(&pass, &[]);
-    eprintln!("Password strength: {:?}", strength.score());
 
-    Ok(())
+    Ok(pass)
 }

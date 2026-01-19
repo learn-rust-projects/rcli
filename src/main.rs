@@ -1,7 +1,9 @@
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use clap::Parser;
 use template::{
-    Base64Opts, Opts, SubCommand, gen_pass, process_base64_decode, process_base64_encode,
-    process_csv,
+    Base64SubCommand, Opts, SubCommand, TextSubCommand, gen_pass, get_reader,
+    process_base64_decode, process_base64_encode, process_csv, process_text_key_generate,
+    process_text_sign, process_text_verify, read_input,
 };
 fn main() -> anyhow::Result<()> {
     let opts: Opts = Opts::parse();
@@ -14,22 +16,58 @@ fn main() -> anyhow::Result<()> {
             Ok(())
         }
         SubCommand::GenPass(gen_pass_opts) => {
-            let _ = gen_pass(
+            let result = gen_pass(
                 gen_pass_opts.length,
                 gen_pass_opts.upper_case,
                 gen_pass_opts.lower_case,
                 gen_pass_opts.number,
                 gen_pass_opts.symbol,
             );
+            let strength = zxcvbn::zxcvbn(&result?, &[]);
+            eprintln!("Password score: {:?}", strength.score());
             Ok(())
         }
         SubCommand::Base64(base64_opts) => match base64_opts {
-            Base64Opts::EnCode(base64_encode_opts) => {
-                process_base64_encode(&base64_encode_opts.input, base64_encode_opts.format)?;
+            Base64SubCommand::EnCode(base64_encode_opts) => {
+                let mut reader = get_reader(&base64_encode_opts.input)?;
+                let encoded = process_base64_encode(&mut reader, base64_encode_opts.format)?;
+                println!("{}", encoded);
                 Ok(())
             }
-            Base64Opts::DeCode(base64_decode_opts) => {
-                process_base64_decode(&base64_decode_opts.input, base64_decode_opts.format)?;
+            Base64SubCommand::DeCode(base64_decode_opts) => {
+                let mut reader = get_reader(&base64_decode_opts.input)?;
+                let decoded = process_base64_decode(&mut reader, base64_decode_opts.format)?;
+                println!("{}", decoded);
+                Ok(())
+            }
+        },
+        SubCommand::Text(text_opts) => match text_opts {
+            TextSubCommand::Sign(text_sign_opts) => {
+                let mut reader = get_reader(&text_sign_opts.input)?;
+                let key = read_input(&text_sign_opts.key)?;
+                let sig = process_text_sign(&mut reader, &key, text_sign_opts.format)?;
+                let encoded = URL_SAFE_NO_PAD.encode(sig);
+                println!("{}", encoded);
+                Ok(())
+            }
+            TextSubCommand::Verify(text_verify_opts) => {
+                let mut reader = get_reader(&text_verify_opts.input)?;
+                let key = read_input(&text_verify_opts.key)?;
+                let decoded = URL_SAFE_NO_PAD.decode(&text_verify_opts.sig)?;
+                let verify =
+                    process_text_verify(&mut reader, &key, &decoded, text_verify_opts.format)?;
+                if verify {
+                    println!("✓ Signature verified");
+                } else {
+                    println!("⚠ Signature not verified");
+                }
+                Ok(())
+            }
+            TextSubCommand::Generate(text_key_generate_opts) => {
+                let key = process_text_key_generate(text_key_generate_opts.format)?;
+                for (k, v) in key {
+                    std::fs::write(text_key_generate_opts.output_path.join(k), v)?;
+                }
                 Ok(())
             }
         },
