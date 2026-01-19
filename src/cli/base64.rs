@@ -9,6 +9,24 @@ pub enum Base64SubCommand {
     DeCode(Base64DecodeOpts),
 }
 
+impl CmdExc for Base64SubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            Base64SubCommand::EnCode(base64_encode_opts) => {
+                let mut reader = crate::get_reader(&base64_encode_opts.input)?;
+                let encoded = crate::process_base64_encode(&mut reader, base64_encode_opts.format)?;
+                println!("{}", encoded);
+                Ok(())
+            }
+            Base64SubCommand::DeCode(base64_decode_opts) => {
+                let mut reader = crate::get_reader(&base64_decode_opts.input)?;
+                let decoded = crate::process_base64_decode(&mut reader, base64_decode_opts.format)?;
+                println!("{}", decoded);
+                Ok(())
+            }
+        }
+    }
+}
 #[derive(Parser, Debug)]
 pub struct Base64EncodeOpts {
     #[arg(short, long, value_parser = verify_file, default_value = "-", help = "Input file path")]

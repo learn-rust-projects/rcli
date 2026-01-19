@@ -1,3 +1,5 @@
+use std::rc::Rc;
+
 use super::prelude::*;
 
 #[derive(Parser, Debug)]
@@ -12,4 +14,22 @@ pub struct GenPassOpts {
     pub number: bool,
     #[arg(long, help = "Password has symbol", default_value_t = true)]
     pub symbol: bool,
+}
+
+impl CmdExc for GenPassOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let result = crate::gen_pass(
+            self.length,
+            self.upper_case,
+            self.lower_case,
+            self.number,
+            self.symbol,
+        );
+        let strength = zxcvbn::zxcvbn(&result?, &[]);
+        eprintln!("Password score: {:?}", strength.score());
+        let rc = Rc::new(1);
+        println!("{}", rc);
+
+        Ok(())
+    }
 }

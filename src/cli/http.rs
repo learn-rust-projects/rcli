@@ -16,6 +16,13 @@ pub struct HttpServerOpts {
     #[arg(short, long, default_value = "8080", help = "Port to listen on")]
     pub port: u16,
 }
+impl CmdExc for HttpSubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            HttpSubCommand::Serve(opts) => crate::process_http_serve(opts.dir, opts.port).await,
+        }
+    }
+}
 
 #[derive(Parser, Debug)]
 pub struct TextSignOpts {

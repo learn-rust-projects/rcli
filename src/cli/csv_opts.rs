@@ -17,6 +17,15 @@ pub struct CsvOpts {
     pub header: bool,
 }
 
+impl CmdExc for CsvOpts {
+    async fn execute(self) -> anyhow::Result<()> {
+        let output = self
+            .output
+            .unwrap_or_else(|| format!("output.{}", self.format));
+        let _ = crate::process_csv(&self.input, &output, self.format);
+        Ok(())
+    }
+}
 #[derive(Debug, Clone, Copy)]
 pub enum OutputFormat {
     Json,

@@ -1,8 +1,10 @@
 use std::path::PathBuf;
 
+use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use strum::{Display, EnumString, IntoStaticStr};
 
 use super::prelude::*;
+use crate::{get_reader, process_text_key_generate, process_text_verify, read_input};
 #[derive(Parser, Debug)]
 pub enum TextSubCommand {
     #[command(about = "Sign a message with a private/shared key")]
@@ -11,6 +13,40 @@ pub enum TextSubCommand {
     Verify(TextVerifyOpts),
     #[command(about = "Generate a new key pair")]
     Generate(TextKeyGenerateOpts),
+}
+impl CmdExc for TextSubCommand {
+    async fn execute(self) -> anyhow::Result<()> {
+        match self {
+            TextSubCommand::Sign(text_sign_opts) => {
+                let mut reader = get_reader(&text_sign_opts.input)?;
+                let key = read_input(&text_sign_opts.key)?;
+                let sig = crate::process_text_sign(&mut reader, &key, text_sign_opts.format)?;
+                let encoded = URL_SAFE_NO_PAD.encode(sig);
+                println!("{}", encoded);
+                Ok(())
+            }
+            TextSubCommand::Verify(text_verify_opts) => {
+                let mut reader = get_reader(&text_verify_opts.input)?;
+                let key = read_input(&text_verify_opts.key)?;
+                let decoded = URL_SAFE_NO_PAD.decode(&text_verify_opts.sig)?;
+                let verify =
+                    process_text_verify(&mut reader, &key, &decoded, text_verify_opts.format)?;
+                if verify {
+                    println!("✓ Signature verified");
+                } else {
+                    println!("⚠ Signature not verified");
+                }
+                Ok(())
+            }
+            TextSubCommand::Generate(text_key_generate_opts) => {
+                let key = process_text_key_generate(text_key_generate_opts.format)?;
+                for (k, v) in key {
+                    std::fs::write(text_key_generate_opts.output_path.join(k), v)?;
+                }
+                Ok(())
+            }
+        }
+    }
 }
 
 #[derive(Parser, Debug)]

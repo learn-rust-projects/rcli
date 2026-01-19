@@ -1,3 +1,3 @@
 pub use clap::Parser;
 
-pub use super::{verify_file, verify_path};
+pub use super::{CmdExc, verify_file, verify_path};

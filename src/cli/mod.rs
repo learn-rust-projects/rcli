@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 pub use base64::{Base64DecodeOpts, Base64EncodeOpts, Base64Format, Base64SubCommand};
 use clap::Parser;
 pub use csv_opts::{CsvOpts, OutputFormat};
+use enum_dispatch::enum_dispatch;
 pub use gen_pass::GenPassOpts;
 pub use http::HttpSubCommand;
 pub use text::{TextSignFormat, TextSubCommand};
@@ -20,16 +21,17 @@ pub struct Opts {
 }
 
 #[derive(Parser, Debug)]
+#[enum_dispatch(CmdExc)]
 pub enum SubCommand {
     #[command(name = "csv", about = "Show Csv ,or convert Csv to others formats")]
     Csv(CsvOpts),
     #[command(name = "genpass", about = "Generate password")]
     GenPass(GenPassOpts),
-    #[clap(subcommand)]
+    #[clap(subcommand, name = "base64", about = "Base64 encode or decode")]
     Base64(Base64SubCommand),
-    #[clap(subcommand)]
+    #[clap(subcommand, name = "text", about = "Text sign or verify")]
     Text(TextSubCommand),
-    #[clap(subcommand)]
+    #[clap(subcommand, name = "http", about = "HTTP server")]
     Http(HttpSubCommand),
 }
 
@@ -49,6 +51,11 @@ pub fn verify_path(path: &str) -> Result<PathBuf, &'static str> {
     } else {
         Err("Path does not exist or is not a directory")
     }
+}
+#[enum_dispatch]
+#[allow(async_fn_in_trait)] // cmd don't need send
+pub trait CmdExc {
+    async fn execute(self) -> anyhow::Result<()>;
 }
 
 #[cfg(test)]
