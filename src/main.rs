@@ -1,11 +1,13 @@
 use base64::{Engine, engine::general_purpose::URL_SAFE_NO_PAD};
 use clap::Parser;
 use template::{
-    Base64SubCommand, Opts, SubCommand, TextSubCommand, gen_pass, get_reader,
+    Base64SubCommand, HttpSubCommand, Opts, SubCommand, TextSubCommand, gen_pass, get_reader,
     process_base64_decode, process_base64_encode, process_csv, process_text_key_generate,
     process_text_sign, process_text_verify, read_input,
 };
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
+    tracing_subscriber::fmt().init();
     let opts: Opts = Opts::parse();
     match opts.sub {
         SubCommand::Csv(csv_opts) => {
@@ -68,6 +70,12 @@ fn main() -> anyhow::Result<()> {
                 for (k, v) in key {
                     std::fs::write(text_key_generate_opts.output_path.join(k), v)?;
                 }
+                Ok(())
+            }
+        },
+        SubCommand::Http(http_opts) => match http_opts {
+            HttpSubCommand::Serve(http_get_opts) => {
+                template::process_http_serve(http_get_opts.dir, http_get_opts.port).await?;
                 Ok(())
             }
         },
