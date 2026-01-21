@@ -33,7 +33,7 @@ impl Blake3 {
 
 impl TextSigner for Blake3 {
     fn sign(&self, input: &mut dyn Read) -> Result<Vec<u8>> {
-        // TODO: improve perf by reading in chunks
+        // NOTE: improve perf by reading in chunks
         let mut buf = Vec::new();
         input.read_to_end(&mut buf)?;
         let ret = blake3::keyed_hash(&self.key, &buf);

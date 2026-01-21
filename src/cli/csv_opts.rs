@@ -1,7 +1,9 @@
+use strum::{Display, EnumString, IntoStaticStr};
+
 use super::prelude::*;
 #[derive(Parser, Debug)]
 pub struct CsvOpts {
-    #[arg(short, long, help = "Input file path",value_parser = verify_file)]
+    #[arg(short, long, help = "Input file path",value_parser = verify_file,default_value = "./assets/juventus.csv")]
     pub input: String,
 
     #[arg(short, long, help = "Output file path")]
@@ -26,35 +28,16 @@ impl CmdExc for CsvOpts {
         Ok(())
     }
 }
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, IntoStaticStr, EnumString, Display)]
+#[strum(serialize_all = "lowercase")]
 pub enum OutputFormat {
     Json,
+    Csv,
     Yaml,
-}
-impl std::fmt::Display for OutputFormat {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", Into::<&'static str>::into(*self))
-    }
 }
 
 fn parse_format(format: &str) -> Result<OutputFormat, anyhow::Error> {
-    format.parse()
-}
-impl From<OutputFormat> for &'static str {
-    fn from(format: OutputFormat) -> Self {
-        match format {
-            OutputFormat::Json => "json",
-            OutputFormat::Yaml => "yaml",
-        }
-    }
-}
-impl std::str::FromStr for OutputFormat {
-    type Err = anyhow::Error;
-    fn from_str(format: &str) -> Result<Self, Self::Err> {
-        match format {
-            "json" => Ok(OutputFormat::Json),
-            "yaml" => Ok(OutputFormat::Yaml),
-            _ => anyhow::bail!("Unsupported output format: {}", format),
-        }
-    }
+    format
+        .parse::<OutputFormat>()
+        .map_err(|e| anyhow::anyhow!("Unsupported output format: {}", e))
 }

@@ -8,7 +8,6 @@ pub enum Base64SubCommand {
     #[command(name = "decode", about = "Base64 decode")]
     DeCode(Base64DecodeOpts),
 }
-
 impl CmdExc for Base64SubCommand {
     async fn execute(self) -> anyhow::Result<()> {
         match self {

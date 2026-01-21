@@ -59,7 +59,7 @@ mod tests {
         let format = Base64Format::Standard;
         let mut read = get_reader(input)?;
         let result = process_base64_decode(&mut read, format);
-        // TODO: assume it decode data is string
+        // FIXME: assume it decode data is string
         let decoded = result?;
         let expect: String = fs::read_to_string("./fixtures/blake3.txt")?
             .trim_end_matches("\n")
